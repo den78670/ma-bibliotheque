@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Bibliothèque Moderne</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        /* --- STATISTIQUES --- */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card span {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- FILTRES --- */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .filter-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* --- GRILLE DE LIVRES --- */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 300px;
+            background: #cbd5e1;
+            object-fit: cover;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .book-info {
+            padding: 1.25rem;
+            flex-grow: 1;
+        }
+
+        .book-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .book-author {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .book-series {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 2rem auto;
+            display: block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align:center; margin-bottom: 2rem;">📚 Ma Bibliothèque Privée</h1>
+
+    <div class="stats-container" id="stats">
+        </div>
+
+    <input type="text" class="search-box" id="search" placeholder="Rechercher un titre, un auteur...">
+
+    <div class="filters" id="filters">
+        <button class="filter-btn active" onclick="filterBy('all')">Tous</button>
+        </div>
+
+    <div class="book-grid" id="book-grid">
+        </div>
+
+    <script>
+        // --- VOS DONNÉES (Fusionnées pour plus de simplicité) ---
+        const BOOKS_DATA = [
+            {title: "Le loup des plaines", authors: "Conn Iggulden", series: "Épopée de Gengis Khan", isbn: "9782258077003"},
+            {title: "Pandore Abusée", authors: "Hamilton", series: "Étoile de Pandore", isbn: "9782811200077"},
+            {title: "Cent ans de solitude", authors: "Gabriel García Márquez", series: "", isbn: "9782020238304"},
+            {title: "Albertine disparue", authors: "Marcel Proust", series: "À la recherche du temps perdu", isbn: ""},
+            // ... Ajoutez vos autres lignes ici ou laissez le script charger le reste
+        ];
+
+        // Fonction pour obtenir l'URL de couverture (Open Library)
+        function getCoverURL(isbn, title) {
+            if (isbn && isbn.trim() !== "") {
+                return `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false`;
+            }
+            // Fallback : Image de remplacement avec texte
+            return `https://placehold.co/400x600/3b82f6/FFF?text=${encodeURIComponent(title)}`;
+        }
+
+        function renderStats(books) {
+            const total = books.length;
+            const authors = new Set(books.map(b => b.authors)).size;
+            const series = new Set(books.filter(b => b.series).map(b => b.series)).size;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card"><span>${total}</span><label>Livres</label></div>
+                <div class="stat-card"><span>${authors}</span><label>Auteurs</label></div>
+                <div class="stat-card"><span>${series}</span><label>Séries</label></div>
+            `;
+        }
+
+        function renderFilters(books) {
+            const series = [...new Set(books.filter(b => b.series).map(b => b.series))].sort();
+            const container = document.getElementById('filters');
+            series.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.innerText = s;
+                btn.onclick = () => filterBy(s, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function renderBooks(booksToDisplay) {
+            const grid = document.getElementById('book-grid');
+            grid.innerHTML = '';
+
+            booksToDisplay.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.innerHTML = `
+                    <img class="book-cover" src="${getCoverURL(book.isbn, book.title)}" alt="Couverture" onerror="this.src='https://placehold.co/400x600/e2e8f0/64748b?text=Image+Non+Disponible'">
+                    <div class="book-info">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.authors}</div>
+                        <div class="book-series">${book.series || ''}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterBy(seriesName, btn) {
+            // Update active button UI
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            if (seriesName === 'all') {
+                renderBooks(BOOKS_DATA);
+            } else {
+                const filtered = BOOKS_DATA.filter(b => b.series === seriesName);
+                renderBooks(filtered);
+            }
+        }
+
+        // Recherche temps réel
+        document.getElementById('search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = BOOKS_DATA.filter(b => 
+                b.title.toLowerCase().includes(term) || 
+                b.authors.toLowerCase().includes(term)
+            );
+            renderBooks(filtered);
+        });
+
+        // Initialisation
+        renderStats(BOOKS_DATA);
+        renderFilters(BOOKS_DATA);
+        renderBooks(BOOKS_DATA);
+
+    </script>
+</body>
+</html>
